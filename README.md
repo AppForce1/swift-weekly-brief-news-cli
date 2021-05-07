@@ -2,6 +2,7 @@
 
 This is a CLI tool I created for personal use. I published it on Github for fun, because I am a fan of a few tools and practices used in this tool.
 
+Please note, the project structure is defined using [Tuist](https://tuist.io). Please install that tool first and run `tuist generate` to generate the Xcode project structure.
 Of interest:
 
 - [RSParser](https://github.com/apple/swift-argument-parser) a supporting lib of [NetNewsWire](https://netnewswire.com/) to parse RSS feeds.
