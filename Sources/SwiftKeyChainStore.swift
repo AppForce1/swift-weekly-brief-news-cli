@@ -16,6 +16,7 @@ enum KeyChainError: Error {
 
 private enum KeychainKey: String {
     case sendyApi
+    case secret
     case productionListId
     case testListId
 }
@@ -36,6 +37,14 @@ extension SwiftKeyChainStore {
 
     func setProductionListId(_ newValue: String) throws {
         try setString(newValue, forKey: KeychainKey.productionListId.rawValue)
+    }
+    
+    func secret() throws -> String? {
+        try string(forKey: KeychainKey.secret.rawValue)
+    }
+    
+    func setSecret(_ newValue: String) throws {
+        try setString(newValue, forKey: KeychainKey.secret.rawValue)
     }
     
     func testListId() throws -> String? {

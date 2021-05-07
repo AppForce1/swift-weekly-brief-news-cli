@@ -15,7 +15,7 @@ struct Config: ParsableCommand {
     static let configuration = CommandConfiguration(abstract: "Configure.")
     
     @Option(help: "The Sendy API key.")
-    var sendyApi: String
+    var sendyApi: String?
     
     @Option(help: "The URL of the rss feed to filter from.")
     var rssFeed: String
@@ -26,11 +26,14 @@ struct Config: ParsableCommand {
     @Option(help: "The create URL of the sendy instance.")
     var apiCampaignUrl: String
     
-    @Option(help: "Production list ID.")
-    var productionListId: String
+    @Option(help: "Production list ID. Only required when using a Sendy API Key.")
+    var productionListId: String?
 
-    @Option(help: "Test list ID.")
-    var testListId: String
+    @Option(help: "Test list ID. Only required when using a Sendy API Key.")
+    var testListId: String?
+    
+    @Option(help: "Secret for when using the in-between script. When used, sendyApi, productionListId and testListId are NOT used.")
+    var secret: String
 
     
     func run() throws {
@@ -38,9 +41,19 @@ struct Config: ParsableCommand {
             Config.exit(withError: DefaultsError.defaultsSuiteMissing)
         }
 
-        try keychain.setSendyApi(sendyApi)
-        try keychain.setProductionListId(productionListId)
-        try keychain.setTestListId(testListId)
+        try keychain.setSecret(secret)
+
+        if let sendyApi = sendyApi {
+            try keychain.setSendyApi(sendyApi)
+        }
+        
+        if let productionListId = productionListId{
+            try keychain.setProductionListId(productionListId)
+        }
+        
+        if let testListId = testListId {
+            try keychain.setTestListId(testListId)
+        }
         
         defaults.rssFeed = rssFeed
         defaults.contentUrl = contentUrl
@@ -126,21 +139,18 @@ struct Send: ParsableCommand {
             Show.exit(withError: DefaultsError.malformedUrl)
         }
         
-        guard let sendyApi = try keychain.sendyApi() else {
-            Show.exit(withError: DefaultsError.missingValue)
-        }
+        let sendyApi = try keychain.sendyApi()
         
         guard let apiCampaignUrlString = defaults.apiCampaignUrl, let apiCampaignUrl = URL(string: apiCampaignUrlString) else {
             Show.exit(withError: DefaultsError.malformedUrl)
         }
         
-        guard let productionListId = try keychain.productionListId() else {
-            Show.exit(withError: DefaultsError.missingValue)
-        }
         
-        guard let testListId = try keychain.testListId() else {
-            Show.exit(withError: DefaultsError.missingValue)
-        }
+        let productionListId = try keychain.productionListId()
+        
+        let testListId = try keychain.testListId()
+        
+        let secret = try keychain.secret()
 
         var newsletterContent: String? = nil
         var loadedItem: ParsedItem?
@@ -171,7 +181,7 @@ struct Send: ParsableCommand {
         }
         
         group.notify(queue: .main) {
-            CampaignPublisher().publish(sendyApi: sendyApi, apiCampaignUrl: apiCampaignUrl, item: loadedItem, newsletterContent: newsletterContent, forReal: prod, productionListId: productionListId, testListId: testListId) { result in
+            CampaignPublisher().publish(sendyApi: sendyApi, apiCampaignUrl: apiCampaignUrl, item: loadedItem, newsletterContent: newsletterContent, forReal: prod, secret: secret, productionListId: productionListId, testListId: testListId) { result in
                 switch result {
                 case .success(let result):
                     print(result)

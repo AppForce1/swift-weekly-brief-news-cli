@@ -16,3 +16,18 @@ It fetched a bit of HTML from the internet, which happens to be output exactly t
 
 Easy mode newsletter sending. 🤩
 
+## The tool can be used in two ways.
+
+- Direct to Sendy. This requires these options to be set with the `config` command.
+  - `sendyApi`
+  - `rssFeed`
+  - `contentUrl`
+  - `apiCampaignUrl`
+  - `productionListId`
+  - `testListId`
+
+- Through an undisclosed bounce page I created that just adds the `sendyApi, `productionListId` and `testListId`. This requires these options to the config command:
+  - `rssFeed`
+  - `contentUrl`
+  - `apiCampaignUrl`
+  - `secret`

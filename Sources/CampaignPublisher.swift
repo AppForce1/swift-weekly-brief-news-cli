@@ -21,7 +21,7 @@ enum CampaignPublisherError: Error {
 
 struct CampaignCreateBody: URLQueryParameterStringConvertible {
     
-    let api_key: String 
+    let api_key: String?
     let from_name = "Swift Weekly Brief"
     let from_email = "hello@swiftweeklybrief.com"
     let reply_to = "hello@swiftweeklybrief.com"
@@ -30,14 +30,14 @@ struct CampaignCreateBody: URLQueryParameterStringConvertible {
     let html_text: String
     let brand_id = "5"
     let query_string: String
-    let send_campaign = "0"
+    let send_campaign = "1"
     let forReal: Bool
-    let productionListId: String
-    let testListId: String
+    let secret: String?
+    let productionListId: String?
+    let testListId: String?
     
     private var dictionary: [String: String] {
-        return [
-            "api_key": api_key,
+        var result = [
             "from_name": from_name,
             "from_email": from_email,
             "reply_to": reply_to,
@@ -47,8 +47,27 @@ struct CampaignCreateBody: URLQueryParameterStringConvertible {
             "brand_id": brand_id,
             "query_string": query_string,
             "send_campaign": send_campaign,
-            "list_ids": (forReal ? productionListId : testListId)
+            "for_real": (forReal ? "1": "0")
         ]
+        
+        if let secret = secret {
+            result["secret"] = secret
+        }
+        
+        if let api_key = api_key {
+            result["api_key"] = api_key
+        }
+        if forReal {
+            if let productionListId = productionListId {
+                result["list_ids"] = productionListId
+            }
+        } else {
+            if let testListId = testListId {
+                result["list_ids"] = testListId
+            }
+        }
+        
+        return result
     }
 
     var queryParameters: String {
@@ -65,7 +84,7 @@ struct CampaignCreateBody: URLQueryParameterStringConvertible {
 
 class CampaignPublisher {
         
-    func publish(sendyApi: String, apiCampaignUrl: URL, item: ParsedItem?, newsletterContent: String?, forReal: Bool, productionListId: String, testListId: String, completion: @escaping (Result<String, Error>) -> Void) {
+    func publish(sendyApi: String?, apiCampaignUrl: URL, item: ParsedItem?, newsletterContent: String?, forReal: Bool, secret: String?, productionListId: String?, testListId: String?, completion: @escaping (Result<String, Error>) -> Void) {
         guard let item = item else {
             completion(.failure(CampaignPublisherError.noItem))
             return
@@ -74,7 +93,7 @@ class CampaignPublisher {
             completion(.failure(CampaignPublisherError.noNewsletterContent))
             return
         }
-        let createBody = prepareContent(sendyApi: sendyApi, item: item, newsletterContent: newsletterContent, forReal: forReal, productionListId: productionListId, testListId: testListId)
+        let createBody = prepareContent(sendyApi: sendyApi, item: item, newsletterContent: newsletterContent, forReal: forReal, secret: secret, productionListId: productionListId, testListId: testListId)
         var request = URLRequest(url: apiCampaignUrl)
         request.httpMethod = "POST"
         request.addValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
@@ -98,7 +117,7 @@ class CampaignPublisher {
         task.resume()
     }
     
-    private func prepareContent(sendyApi: String, item: ParsedItem, newsletterContent: String, forReal: Bool, productionListId: String, testListId: String) -> CampaignCreateBody {
+    private func prepareContent(sendyApi: String?, item: ParsedItem, newsletterContent: String, forReal: Bool, secret: String?, productionListId: String?, testListId: String?) -> CampaignCreateBody {
         guard let title = item.title else {
             fatalError("Missing data")
         }
@@ -107,6 +126,6 @@ class CampaignPublisher {
         campaignString = campaignString.replacingOccurrences(of: "#", with: "")
         let queryString = "utm_source=Swift_Weekly_Brief&utm_medium=email&utm_campaign=\(campaignString.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed) ?? "")"
         
-        return CampaignCreateBody(api_key: sendyApi, title: title, subject: "Swift Weekly Brief: \(title)", html_text: newsletterContent, query_string: queryString, forReal: forReal, productionListId: productionListId, testListId: testListId)
+        return CampaignCreateBody(api_key: sendyApi, title: title, subject: "Swift Weekly Brief: \(title)", html_text: newsletterContent, query_string: queryString, forReal: forReal, secret: secret, productionListId: productionListId, testListId: testListId)
     }
 }
