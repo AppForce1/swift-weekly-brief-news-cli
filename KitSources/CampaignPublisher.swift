@@ -83,7 +83,7 @@ struct CampaignCreateBody: URLQueryParameterStringConvertible {
 }
 
 class CampaignPublisher {
-        
+            
     func publish(sendyApi: String?, apiCampaignUrl: URL, item: ParsedItem?, newsletterContent: String?, forReal: Bool, secret: String?, productionListId: String?, testListId: String?, completion: @escaping (Result<String, Error>) -> Void) {
         guard let item = item else {
             completion(.failure(CampaignPublisherError.noItem))

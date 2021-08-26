@@ -19,6 +19,13 @@ let project = Project(name: "SwiftWeeklyBriefNewsCli",
                                bundleId: "net.appforce1.swiftweeklybrief.cli",
                                infoPlist: .default,
                                sources: ["Sources/**"],
-                               dependencies: [.package(product: "ArgumentParser"), .package(product: "RSParser")],
-                               launchArguments: launchArguments)
+                               dependencies: [.target(name: "CommandLineToolKit")],
+                               launchArguments: launchArguments),
+                        Target(name: "CommandLineToolKit",
+                               platform: .macOS,
+                               product: .staticLibrary,
+                               bundleId: "net.appforce1.swiftweeklybrief.cli.kit",
+                               infoPlist: .default,
+                               sources: ["KitSources/**"],
+                               dependencies: [.package(product: "ArgumentParser"), .package(product: "RSParser")])
 ])
